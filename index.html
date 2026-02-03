@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Result Portal - Home</title>
+<link rel="shortcut icon" href="icon.jpg" type="image/x-icon">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+body{background:#f4f6f9;min-height:100vh;display:flex;flex-direction:column;}
+header{background:#1e3c72;color:#fff;padding:20px;text-align:center;}
+nav{background:#162447;display:flex;justify-content:center;gap:30px;padding:10px;}
+nav a{color:#fff;text-decoration:none;font-weight:bold;}
+nav a:hover{text-decoration:underline;}
+main{flex:1;padding:30px;}
+.home{text-align:center;margin-bottom:40px;}
+.home h1{color:#1e3c72;margin-bottom:10px;}
+.home p{color:#444;margin-bottom:25px;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;}
+.card{background:#fff;padding:20px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);}
+footer{background:#162447;color:#fff;text-align:center;padding:12px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Laxmi Secondary School</h1>
+  <p>Online Result Portal</p>
+</header>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="checkresult.html">Check Result</a>
+  <a href="admin.html">Admin Panel</a>
+</nav>
+
+<main>
+
+<section class="home">
+  <h1>Welcome Students 👋</h1>
+  <p>Check your academic result easily using your roll number.</p>
+  <div class="cards">
+    <div class="card"><h3>Fast Result</h3><p>Instant result lookup using roll number.</p></div>
+    <div class="card"><h3>Mobile Friendly</h3><p>Works perfectly on mobile and desktop.</p></div>
+    <div class="card"><h3>Secure</h3><p>Password protected admin panel.</p></div>
+  </div>
+</section>
+
+</main>
+
+<footer>© 2026 Student Result Portal | All Rights Reserved</footer>
+
+</body>
+</html>
