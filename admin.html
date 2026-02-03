@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel - Student Result Portal</title>
+<link rel="shortcut icon" href="icon.jpg" type="image/x-icon">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+body{background:#f4f6f9;min-height:100vh;display:flex;flex-direction:column;}
+header{background:#1e3c72;color:#fff;padding:20px;text-align:center;}
+nav{background:#162447;display:flex;justify-content:center;gap:30px;padding:10px;}
+nav a{color:#fff;text-decoration:none;font-weight:bold;}
+nav a:hover{text-decoration:underline;}
+main{flex:1;padding:30px;}
+.admin-box{max-width:900px;margin:auto;background:#fff;padding:25px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.15);}
+.admin-box h2{text-align:center;margin-bottom:20px;color:#1e3c72;}
+input, button{padding:10px;border-radius:5px;border:1px solid #ccc;}
+button{background:#1e3c72;color:#fff;border:none;cursor:pointer;}
+button:hover{background:#16315c;}
+.hidden{display:none;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;}
+.subject-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;margin-bottom:12px;}
+.remove-btn{background:#dc3545;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;}
+.remove-btn:hover{background:#c82333;}
+.action-btns{display:flex;gap:15px;margin-top:20px;}
+table{width:100%;border-collapse:collapse;margin-top:25px;}
+th, td{border:1px solid #ccc;padding:8px;text-align:center;}
+th{background:#1e3c72;color:#fff;}
+footer{background:#162447;color:#fff;text-align:center;padding:12px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Admin Panel - Student Result Portal</h1>
+  <p>Manage Student Results</p>
+</header>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="checkresult.html">Check Result</a>
+  <a href="admin.html">Admin Panel</a>
+</nav>
+
+<main>
+
+<section class="admin-box">
+
+<h2>Admin Login</h2>
+
+<div id="admin-login">
+  <input type="password" id="admin-pass" placeholder="Enter Admin Password">
+  <br><br>
+  <button onclick="adminLogin()">Login</button>
+  <p id="login-msg" style="color:red;margin-top:10px;"></p>
+</div>
+
+<div id="admin-dashboard" class="hidden">
+
+  <h3>Student Information</h3>
+  <div class="form-grid">
+    <input type="number" id="a-roll" placeholder="Roll Number">
+    <input type="text" id="a-name" placeholder="Student Name">
+  </div>
+
+  <h3>Marks Details</h3>
+  <div id="subjects-container"></div>
+  <button onclick="addSubjectRow()">➕ Add Subject</button>
+
+  <div class="action-btns">
+    <button onclick="addOrUpdateStudent()">Save Student</button>
+    <button onclick="clearForm()" style="background:#6c757d;">Clear</button>
+  </div>
+
+  <h3 style="margin-top:30px;">All Students</h3>
+  <input type="file" id="csv-file" accept=".csv" style="margin-bottom:10px;">
+  <button onclick="importCSV()">Import CSV</button>
+  <button onclick="exportCSV()">Export CSV</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Roll</th>
+        <th>Name</th>
+        <th>Subject</th>
+        <th>Full Marks</th>
+        <th>Obtained Marks</th>
+        <th>Pass/Fail</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="student-table"></tbody>
+  </table>
+
+</div>
+
+</section>
+</main>
+
+<footer>
+© 2026 Student Result Portal | All Rights Reserved
+</footer>
+
+<script>
+let students = JSON.parse(localStorage.getItem('students')) || [];
+const ADMIN_PASSWORD = "admin123";
+
+function adminLogin(){
+  const pass = document.getElementById("admin-pass").value;
+  if(pass===ADMIN_PASSWORD){
+    document.getElementById("admin-login").classList.add("hidden");
+    document.getElementById("admin-dashboard").classList.remove("hidden");
+    renderTable();
+  } else {
+    document.getElementById("login-msg").innerText = "Wrong password!";
+  }
+}
+
+function addSubjectRow(){
+  const box = document.getElementById("subjects-container");
+  const row = document.createElement("div");
+  row.className="subject-row";
+  row.innerHTML=`
+    <input type="text" placeholder="Subject">
+    <input type="number" placeholder="Full Marks">
+    <input type="number" placeholder="Pass Marks">
+    <input type="number" placeholder="Obtained Marks">
+    <button class="remove-btn" onclick="this.parentElement.remove()">X</button>
+  `;
+  box.appendChild(row);
+}
+
+function addOrUpdateStudent(){
+  const roll = Number(document.getElementById("a-roll").value.trim());
+  const name = document.getElementById("a-name").value.trim();
+  if(!roll || !name){ alert("Roll Number and Name required"); return; }
+  const rows = document.querySelectorAll(".subject-row");
+  let subjects=[];
+  rows.forEach(r=>{
+    const i = r.querySelectorAll("input");
+    if(i[0].value && i[1].value && i[2].value && i[3].value){
+      subjects.push({
+        subject:i[0].value,
+        full:i[1].value,
+        pass:i[2].value,
+        obtain:i[3].value,
+        result:Number(i[3].value)>=Number(i[2].value)?"Pass":"Fail"
+      });
+    }
+  });
+  if(subjects.length===0){ alert("Add at least one subject"); return; }
+  students = students.filter(s=>s.roll!==roll);
+  students.push({roll,name,subjects});
+  localStorage.setItem('students',JSON.stringify(students));
+  renderTable();
+  clearForm();
+}
+
+function renderTable(){
+  const tbody=document.getElementById("student-table");
+  tbody.innerHTML="";
+  students.forEach(s=>{
+    s.subjects.forEach(sub=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${s.roll}</td>
+        <td>${s.name}</td>
+        <td>${sub.subject}</td>
+        <td>${sub.full}</td>
+        <td>${sub.obtain}</td>
+        <td>${sub.result}</td>
+        <td>
+          <button onclick="editStudent('${s.roll}')">Edit</button>
+          <button onclick="deleteStudent('${s.roll}')">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function clearForm(){
+  document.getElementById("a-roll").value="";
+  document.getElementById("a-name").value="";
+  document.getElementById("subjects-container").innerHTML="";
+}
+
+function editStudent(roll){
+  const s = students.find(st=>st.roll==roll);
+  document.getElementById("a-roll").value=s.roll;
+  document.getElementById("a-name").value=s.name;
+  const container=document.getElementById("subjects-container");
+  container.innerHTML="";
+  s.subjects.forEach(sub=>{
+    const row=document.createElement("div");
+    row.className="subject-row";
+    row.innerHTML=`
+      <input type="text" placeholder="Subject" value="${sub.subject}">
+      <input type="number" placeholder="Full Marks" value="${sub.full}">
+      <input type="number" placeholder="Pass Marks" value="${sub.pass}">
+      <input type="number" placeholder="Obtained Marks" value="${sub.obtain}">
+      <button class="remove-btn" onclick="this.parentElement.remove()">X</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function deleteStudent(roll){
+  if(confirm("Are you sure to delete this student?")){
+    students=students.filter(s=>s.roll!=roll);
+    localStorage.setItem('students',JSON.stringify(students));
+    renderTable();
+  }
+}
+
+function importCSV(){
+  const file=document.getElementById("csv-file").files[0];
+  if(!file){ alert("Please select a CSV file."); return; }
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    const lines=text.split('\n').filter(line=>line.trim());
+    if(lines.length<2){ alert("Invalid CSV"); return; }
+    const headers=lines[0].split(',');
+    const newStudents={};
+    for(let i=1;i<lines.length;i++){
+      const cols=lines[i].split(',');
+      if(cols.length<6) continue;
+      const roll=Number(cols[0].trim());
+      const name=cols[1].trim();
+      const subject=cols[2].trim();
+      const full=Number(cols[3].trim());
+      const obtain=Number(cols[4].trim());
+      const result=cols[5].trim();
+      if(!newStudents[roll]) newStudents[roll]={roll,name,subjects:[]};
+      const pass=Math.floor(full/2);
+      newStudents[roll].subjects.push({subject,full,pass,obtain,result});
+    }
+    students=Object.values(newStudents);
+    localStorage.setItem('students',JSON.stringify(students));
+    renderTable();
+    alert("CSV Imported Successfully");
+  };
+  reader.readAsText(file);
+}
+
+function exportCSV(){
+  let csv="Roll,Name,Subject,Full Marks,Obtained Marks,Pass/Fail\n";
+  students.forEach(s=>{
+    s.subjects.forEach(sub=>{
+      csv+=`${s.roll},${s.name},${sub.subject},${sub.full},${sub.obtain},${sub.result}\n`;
+    });
+  });
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="result.csv";
+  a.click();
+}
+</script>
+
+</body>
+</html>
